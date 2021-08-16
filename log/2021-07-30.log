@@ -1,0 +1,38 @@
+2021-07-30 15:06:21,791 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：excel
+2021-07-30 15:06:21,847 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/excel/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/excel/2021-07-30/']
+2021-07-30 15:06:21,848 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/excel/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/excel/2021-07-30/']
+2021-07-30 15:06:21,866 - <module> - INFO - 比对成功
+2021-07-30 15:06:33,103 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：word
+2021-07-30 15:06:37,063 - <module> - INFO - 请选择办公软件(office or wps)：OFFICE
+2021-07-30 15:06:37,064 - <module> - INFO - -----开始转换doc_to_docx-----
+2021-07-30 15:06:45,042 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/word/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/word/2021-07-30/']
+2021-07-30 15:06:45,043 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/word/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/word/2021-07-30/']
+2021-07-30 15:06:45,046 - <module> - INFO - 比对成功
+2021-07-30 15:06:59,943 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：txt
+2021-07-30 15:06:59,951 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:06:59,952 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:06:59,967 - <module> - INFO - 比对成功
+2021-07-30 15:09:29,136 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：txt
+2021-07-30 15:09:29,144 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:09:29,145 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:09:29,160 - <module> - INFO - 比对结束
+2021-07-30 15:10:58,047 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：txt
+2021-07-30 15:10:58,056 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:10:58,057 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/txt/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/txt/2021-07-30/']
+2021-07-30 15:10:58,073 - <module> - INFO - 比对结束
+2021-07-30 15:37:27,677 - <module> - INFO - 请选择解析文件类型(excel or word or txt)：excel
+2021-07-30 15:37:27,700 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/excel/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/excel/2021-07-30/']
+2021-07-30 15:37:27,700 - ParsingWord - INFO - 文件夹空，请核对
+文件内容['e:\\自动化测试\\ReportAutomation/compare/original_data/excel/2021-07-30/', 'e:\\自动化测试\\ReportAutomation/compare/challenger/excel/2021-07-30/']
+2021-07-30 15:37:27,719 - <module> - INFO - 比对结束
