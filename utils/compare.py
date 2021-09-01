@@ -39,7 +39,7 @@ class Compare:
                 removed_sheet = len(result[key])
             elif 'values_changed' == key:
                 sheet_cell = len(result[key])
-        result = [begin_filename, end_filename.replace('result', 'challenger'), end_filename, added_sheet, removed_sheet,
+        result = [begin_filename, end_filename, end_filename.replace('challenger', 'result').replace('.xls', '.xlsx'), added_sheet, removed_sheet,
                     sheet_cell, False if result else True]
         return result
 
@@ -80,6 +80,7 @@ class Compare:
         list_args: List = [begin_filename, end_filename]
         compare_list: List = []
         table_list = []
+        table_dict = {}
         dictionary_item_added = 0
         docx_paragraphs_removed = 0
         docx_tables_removed = 0
@@ -91,31 +92,56 @@ class Compare:
             compare_data['docx_paragraphs'], compare_data['docx_tables'], compare_data['docx_header'] = self.parsing_word.get_word(args)
             compare_list.append(compare_data)
         result = DeepDiff(compare_list[0], compare_list[1])
-        for x in compare_list[1]['docx_tables'].keys():
-            table_list.append(x)
-        self.parsing_word.set_docx(list_args[1], table_list, result)
-        for key in result.keys():
+        tmp_table = compare_list[1]['docx_tables']
+        for x, y, z, v in self.dict_parsing(tmp_table, 3):
+            if y not in table_dict.keys():
+                table_dict[y] = {}
+                _row = 0
+                _cel = 0
+                table_list.append(y)
+            table_dict[y][z] = {f"{_row}_{_cel}": []}
+            _cel = len(v) + _cel
+            _row += 1
+        self.parsing_word.set_docx(list_args[1], table_list, table_dict, result)
+        for key, value in self.dict_generator(result):
+            find_str = re.findall(r"\[.*?\]", value)
+            paragraphs_or_tables = find_str[0].replace("[", "").replace("]", "").replace("'", "")
             if 'dictionary_item_added' == key:
-                dictionary_item_added = len(result[key])
+                if 'docx_paragraphs' == paragraphs_or_tables:
+                    if len(find_str) > 2:
+                        pass
+                    else:
+                        dictionary_item_added += 1
             elif 'dictionary_item_removed' == key:
-                for x in result[key]:
-                    self.dictionary_item_removed = len(result[key])
-                    find_str = re.findall(r"\[.*?\]", x)
-                    paragraphs_or_tables = find_str[0].replace("[", "").replace("]", "").replace("'", "")
-                    if 'docx_paragraphs' == paragraphs_or_tables:
+                if 'docx_paragraphs' == paragraphs_or_tables:
+                    if len(find_str) > 2:
+                        pass
+                    else:
                         docx_paragraphs_removed += 1
-                    elif 'docx_tables' == paragraphs_or_tables:
+                elif 'docx_tables' == paragraphs_or_tables:
+                    if len(find_str) > 2:
+                        pass
+                    else:
                         docx_tables_removed += 1
             elif 'values_changed' == key:
-                for x in result[key]:
-                    find_str = re.findall(r"\[.*?\]", x)
-                    paragraphs_or_tables_or_header = find_str[0].replace("[", "").replace("]", "").replace("'", "")
-                    if 'docx_paragraphs' == paragraphs_or_tables_or_header:
-                        docx_paragraphs += 1
-                    elif 'docx_tables' == paragraphs_or_tables_or_header:
-                        docx_tables += 1
-                    elif 'docx_header' == paragraphs_or_tables_or_header:
-                        docx_header += 1
+                if 'docx_paragraphs' == paragraphs_or_tables:
+                    docx_paragraphs += 1
+                elif 'docx_tables' == paragraphs_or_tables:
+                    docx_tables += 1
+                elif 'docx_header' == paragraphs_or_tables:
+                    docx_header += 1
         result = [begin_filename, end_filename.replace('result', 'challenger'), end_filename, dictionary_item_added, docx_paragraphs_removed,
                 docx_tables_removed, docx_paragraphs, docx_tables, docx_header, False if result else True]
         return result
+
+    def dict_generator(self, indict):
+        for key, value in indict.items():
+            for _ in value:
+                yield key, _
+
+    def dict_parsing(self, indict, depth):
+        for k, v in indict.items():
+            if depth == 1:
+                yield k, v
+            else:
+                yield from ((k, *q) for q in self.dict_parsing(v, depth - 1))

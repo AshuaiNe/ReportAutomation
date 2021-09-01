@@ -27,6 +27,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setupUi(self)
         self.m_singal.connect(self.show_msg)
 
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1127, 913)
@@ -138,7 +139,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         data = []
         if self.word_radio.isChecked() or self.excel_radio.isChecked() or self.txt_radio.isChecked():
             open(f"{_path}/log/{time.strftime('%Y-%m-%d', time.localtime())}.log", 'w').close()
-            self.m_singal.emit(f"开始比对{time.asctime( time.localtime(time.time()))}")
+            self.m_singal.emit(f"开始比对{time.asctime( time.localtime(time.time()))}中......")
             ExistsMkDir().exists_mk_dir() # 初始化文件
             main = TestMain()
             if parsing == 'word':
@@ -147,20 +148,22 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     app = 'WPS'
                 else:
                     app = 'OFFICE'
-                log.logger.info(f"请选择办公软件(office or wps)：{app}")
-                log.logger.info("开始转换doc_to_docx".center(50 // 2, "-"))
+                self.m_singal.emit("开始转换doc_to_docx".center(50 // 2, "-"))
                 main.test_convert_doc_to_docx(app)
+                self.m_singal.emit("转换成功")
+                self.m_singal.emit("开始比对word")
                 data = main.test_compare_word()
+                self.m_singal.emit("比对成功")
             elif parsing == 'excel':
                 data = main.test_compare_excel()
             elif parsing == 'txt':
                 data = main.test_compare_txt()
+            log.logger.info(f"比对结束{time.asctime( time.localtime(time.time()))}")
             with open(f"{_path}/log/{time.strftime('%Y-%m-%d', time.localtime())}.log", "r", encoding="utf-8") as lines:
                 array=lines.readlines()
                 for i in array:
                     i=i.strip('\n')
                     self.m_singal.emit(i)
-            self.m_singal.emit(f"比对结束{time.asctime( time.localtime(time.time()))}")
             self.show_report(data)
         else:
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, '警告', '未选择解析格式').exec_()

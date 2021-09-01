@@ -14,6 +14,7 @@ from utils.log import LoggerFactory
 from shutil import copyfile
 from utils.glo import Globals
 from pathlib import Path
+from threading import Thread, Lock
 
 
 class ParsingWord:
@@ -58,7 +59,7 @@ class ParsingWord:
         par_lists = []
         paragraph_data = {}
         table_data = {}
-        set_title = "default_title"
+        set_title = ""
         title_table_SUM = 0
         x = True
         header_data = {}
@@ -69,39 +70,48 @@ class ParsingWord:
                     continue
                 elif 'toc' in block.style.name:
                     continue
-                elif "XBRLTitle" not in block.style.name:
+                elif "XBRL" not in block.style.name:
                     par_lists.append(line)
-                elif "XBRLTitle" in block.style.name:
+                elif "XBRL" in block.style.name:
                     if par_lists and x:
                         paragraph_data['cover'] = par_lists
                         x = False
-                        par_lists
-                        set_title = line
-                    elif block.style.name not in paragraph_data.keys():
-                        paragraph_data[block.style.name] = {}
-                    paragraph_data[block.style.name][line] = par_lists
-                    par_lists = []
+                    elif not par_lists:
+                        paragraph_data[set_title] = par_lists
+                    else:
+                        paragraph_data[set_title] = par_lists
                     set_title = line
-            else:
-                cell_lists = []
-                try:
-                    if set_title in table_data.keys():
-                        title_table_SUM += 1
-                        set_title = set_title + f"_表格{title_table_SUM}"
-                    for cell in block._cells:
-                        line = self.compile.sub("", cell.text)
-                        cell_lists.append(line)
-                    table_data[set_title] = cell_lists
+                    par_lists = []
                     title_table_SUM = 0
+            else:
+                cell_dict = {}
+                try:
+                    if set_title not in table_data.keys():
+                        table_data[set_title] = {}
+                    for row_int, row in enumerate(block.rows):
+                        B = []
+                        for cel in row.cells:
+                            line = re.sub(r"\s+", "", cel.text)
+                            B.append(line)
+                        if B[0] in cell_dict.keys():
+                            B[0] = f"{B[0]}_{row_int}"
+                        cell_dict.update({f"{B[0]}": B})
+                        row_int += 1
+                    title_table_SUM = len(table_data[set_title]) + title_table_SUM
+                    table_title = set_title + f"_表格{title_table_SUM}"
+                    table_data[set_title][table_title] = cell_dict
+                    title_table_SUM += 1
                 except Exception as e:
+                    if set_title not in table_data.keys():
+                        table_data[set_title] = {}
+                    title_table_SUM = len(table_data[set_title]) + title_table_SUM
+                    table_title = set_title + f"_表格{title_table_SUM}"
+                    table_data[set_title][table_title] = {'异常表格，占位': '0'}
+                    title_table_SUM += 1
                     self.log.logger.info(f'文件路径{filename}，标题：{set_title}表格取值异常，无法读取：{e}')
                     continue 
-        if set_title == "default_title" and par_lists:
-            paragraph_data['default_style_name'] = {}
-            paragraph_data['default_style_name'][set_title] = par_lists
-        elif set_title != 'default_title' and par_lists:
-            paragraph_data['default_style_name'] = {}
-            paragraph_data['default_style_name'][set_title] = par_lists
+        if par_lists:
+            paragraph_data[set_title] = par_lists
         if len(paragraph_data.keys()) < 3:
             self.log.logger.info(f"标题少于3个，格式异常：{filename}")
         if document.sections:
@@ -122,7 +132,10 @@ class ParsingWord:
                 application_app = "Word"
             elif app == 'WPS':
                 application_app = "Kwps"
-            w = wc.Dispatch(f'{application_app}.Application') # 打开word应用程序
+            try:
+                w = wc.Dispatch(f'{application_app}.Application') # 打开word应用程序
+            except Exception:
+                self.log.logger.info(f"应用程序打开异常，请使用其它程序{Exception}")
             for path_file in self._path_files:
                 for file in Path(path_file).iterdir():
                     if Path(file).suffix == '.doc' and not Path(file).stem.startswith('~$'):
@@ -157,6 +170,8 @@ class ParsingWord:
                             file_path = file.__str__()
                             if i == 0:
                                 original_file_list.append(file_path)
+                            elif i == 1 and endswith == '.xls':
+                                challenger_file_list.append(file_path)
                             else:
                                 file = "copyfile" + Path(file).stem + Path(file).suffix
                                 file_new_path = self._result_file + file
@@ -176,75 +191,104 @@ class ParsingWord:
         except Exception as e:
             self.log.logger.info(f"{e}")
 
-    def set_docx(self, file_name, table_list, compare_result):
+    def set_docx(self, file_name, table_list, table_dict, compare_result):
         '''
         @description: 把比对结果写入word文档中
         @param {file_name, compare_result}
         @return {None}
         '''        
-        paragraphs_old_value = []
+        paragraphs_old_value = {}
         title_old_value = []
         difference_title_list = []
-        difference_paragraphs_list = []
+        difference_paragraphs_list = {}
         difference_tables_list = {}
         tables_old_value = {}
+        set_title = 'cover'
         doc = Document(file_name)
-        old_sum = 0
-        for key in compare_result.keys():
-            if 'dictionary_item_added' == key:
-                for x in range(len(compare_result['dictionary_item_added'])):
-                    find_str = re.findall(r"\[.*?\]", compare_result['dictionary_item_added'][x])
-                    difference_title_list.append(find_str[2].replace("[", "").replace("]", "").replace("'", ""))
-            elif 'dictionary_item_removed' == key:
-                for x in range(len(compare_result['dictionary_item_removed'])):
-                    find_str = re.findall(r"\[.*?\]", compare_result['dictionary_item_removed'][x])
-                    if len(find_str) < 3:
+        for x, y, z in self.dict_generator(compare_result):
+            if isinstance(z, dict):
+                key = y
+                new_value = re.sub(r"\s+", "", z['new_value'])
+                old_value = re.sub(r"\s+", "", z['old_value'])
+            else:
+                key = z
+            try:
+                find_str = re.findall(r"\[.*?\]", key)
+                tmp_str = find_str[0].replace("[", "").replace("]", "").replace("'", "")
+            except:
+                continue
+            if 'dictionary_item_added' == x:
+                    if tmp_str == 'docx_paragraphs':
+                        difference_title_list.append(find_str[1].replace("[", "").replace("]", "").replace("'", ""))
+            elif 'dictionary_item_removed' == x:
+                    if tmp_str == 'docx_paragraphs':
                         title_old_value.append(find_str[1].replace("[", "").replace("]", "").replace("'", ""))
-                    else:
-                        title_old_value.append(find_str[2].replace("[", "").replace("]", "").replace("'", ""))
-            elif 'values_changed' == key:
-                for key in compare_result['values_changed']:
-                    find_str = re.findall(r"\[.*?\]", key)
-                    paragraphs_or_tables_or_header = find_str[0].replace("[", "").replace("]", "").replace("'", "")
-                    if 'docx_paragraphs' == paragraphs_or_tables_or_header:
-                        difference_paragraphs_list.append(re.sub(r"\s+", "", compare_result['values_changed'][key]['new_value']))
-                        paragraphs_old_value.append(re.sub(r"\s+", "", compare_result['values_changed'][key]['old_value']))
-                    elif 'docx_tables' == paragraphs_or_tables_or_header:
-                        key = re.sub(r"\s+", "", key)
-                        new_value = re.sub(r"\s+", "", compare_result['values_changed'][key]['new_value'])
-                        old_value = re.sub(r"\s+", "", compare_result['values_changed'][key]['old_value'])
+            elif 'values_changed' == x:
+                    if 'docx_paragraphs' == tmp_str:
+                        tmp_key = find_str[1].replace("[", "").replace("]", "").replace("'", "")
+                        difference_paragraphs_list.update({f'{tmp_key}': f'{new_value}'})
+                        paragraphs_old_value.update({f'{tmp_key}': f'{old_value}'})
+                    elif 'docx_tables' == tmp_str:
                         difference_tables_list.update({f"{key}": new_value})
                         tables_old_value.update({f"{key}": old_value})
-        for par in doc.paragraphs:
-            line = re.sub(r"\s+", "", par.text)
-            for difference in difference_paragraphs_list:
-                if line == difference:
+        for key, value in difference_paragraphs_list.items():
+            for par in doc.paragraphs:
+                if key != 'cover':
+                    if "XBRL" in par.style.name:
+                        set_title = re.sub(r"\s+", "", par.text)
+                        continue
+                line = re.sub(r"\s+", "", par.text)
+                if line == value:
                     try:
-                        for run in par.runs:
-                            run.font.color.rgb = RGBColor(255, 255, 0)
-                        par.add_comment(paragraphs_old_value[old_sum], author='差异段落', initials='od')
-                        old_sum += 1
+                        if set_title == key:
+                            for run in par.runs:
+                                run.font.color.rgb = RGBColor(255, 255, 0)
+                            par.add_comment(paragraphs_old_value[key], author='差异段落', initials='od')
+                            break
                     except Exception as e:
                         continue
-            for difference in difference_title_list:
+        for difference in difference_title_list:
+            for par in doc.paragraphs:
+                line = re.sub(r"\s+", "", par.text)
                 if line == difference:
                     try:
                         for run in par.runs:
                             run.font.color.rgb = RGBColor(0, 255, 0)
                         par.add_comment('历史文件不存在该章节，请人工核对', author='新增章节', initials='od')
+                        break
                     except Exception as e:
                         continue
-        for key in difference_tables_list:
+        for key, value in difference_tables_list.items():
             find_str = re.findall(r"\[.*?\]", key)
-            cell = doc.tables[table_list.index(find_str[1].replace("[", "").replace("]", "").replace("'", ""))]._cells[int(find_str[2].replace("[", "").replace("]", ""))]
+            _table_str = str(find_str[2].replace("[", "").replace("]", "").replace("'", ""))
+            _table = table_list.index(_table_str)
+            _row = find_str[3].replace("[", "").replace("]", "").replace("'", "")
+            _cel = int(find_str[4].replace("[", "").replace("]", "").replace("'", ""))
+            _row_cel = [x for x in table_dict[_table_str][_row].keys()]
+            _cel = int(_row_cel[0].split("_")[1]) + int(_cel)
+            cell = doc.tables[int(_table)]._cells[_cel]
             line = re.sub(r"\s+", "", cell.text)
-            if line == difference_tables_list[key]:
+            if line == value:
                 runs = cell.paragraphs[0].runs
                 for run in runs:
                     run.font.color.rgb = RGBColor(255, 255, 0)
                 cell.paragraphs[0].add_comment(tables_old_value[key], author='差异单元格', initials='od')
         for old_value in title_old_value:
-            run = doc.paragraphs[0].runs[-1]
-            run.font.color.rgb = RGBColor(255, 0, 0)
-            run.add_comment(old_value.split("_")[0], author='删除的章节或章节下的表格', initials='od')
+            for x in range(10):
+                if not doc.paragraphs[x].runs:
+                    pass
+                else:
+                    run = doc.paragraphs[x].runs[-1]
+                    run.font.color.rgb = RGBColor(255, 0, 0)
+                    run.add_comment(old_value.split("_")[0], author='删除的章节或章节下的表格', initials='od')
+                    break
         doc.save(file_name)
+
+    def dict_generator(self, indict):
+        for key, value in indict.items():
+            if isinstance(value, dict):
+                for x, y in value.items():
+                    yield key, x, y
+            else:
+                for _ in value:
+                    yield key, None, _

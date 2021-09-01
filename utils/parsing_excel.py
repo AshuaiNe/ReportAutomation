@@ -5,10 +5,10 @@ import pandas
 import time
 import xlwt
 import string
+import openpyxl
 from pathlib import Path
 from utils.glo import Globals
 from win32com import client as wc
-from openpyxl import load_workbook
 from openpyxl.comments import Comment
 
 
@@ -20,6 +20,7 @@ class ParingExcel:
         self.parsing = self.glo.get_value('parsing')
         self.product = self.glo.get_value('product')
         self._excel_report = f"{self._path}/compare/excel_report/{self.parsing}/{time.strftime('%Y-%m-%d', time.localtime())}/"
+        self._result_file = f"{self._path}/compare/result/{self.parsing}/{time.strftime('%Y-%m-%d', time.localtime())}/"
 
     def write_excel(self, data_lists, app):
         for x in range(len(data_lists)):
@@ -62,6 +63,7 @@ class ParingExcel:
         removed_sheet = []
         changed = []
         values_changed = []
+        filename = Path(filename).stem + '.xlsx'
         for key in compare_result.keys():
             if key == 'dictionary_item_added':
                 for x in range(len(compare_result[key])):
@@ -84,12 +86,11 @@ class ParingExcel:
             else:
                 continue
         dict_frame = {"新增sheet": added_sheet, "删除sheet": removed_sheet, "差异单元格": changed, "差异结果": values_changed}
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('比对结果', cell_overwrite_ok=True)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = '比对结果'
         for x, key in enumerate(dict_frame):
-            ws.write(0, x, str(key))
-            row = 1
+            ws.cell(row=1, column=x+1, value=str(key)).value
             for y in range(len(dict_frame[key])):
-                ws.write(row, x, str(dict_frame[key][y]))
-                row += 1
-        wb.save(filename)
+                ws.cell(row=y+2, column=x+1, value=str(dict_frame[key][y])).value
+        wb.save(self._result_file + filename)
