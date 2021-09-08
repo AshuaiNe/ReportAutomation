@@ -27,7 +27,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setupUi(self)
         self.m_singal.connect(self.show_msg)
 
-
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1127, 913)
@@ -134,43 +133,73 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             parsing = radio.text()
             glo.set_value('parsing', parsing)
 
+    def set_btn_or_radio(self, bol=True):
+        self.pushButton.setEnabled(bol)
+        self.word_radio.setEnabled(bol)
+        self.excel_radio.setEnabled(bol)
+        self.txt_radio.setEnabled(bol)
+
     def display(self):
+        self.set_btn_or_radio(False)
+        self.m_thread = Thread()
         self.textEdit_log.clear()
-        data = []
         if self.word_radio.isChecked() or self.excel_radio.isChecked() or self.txt_radio.isChecked():
             open(f"{_path}/log/{time.strftime('%Y-%m-%d', time.localtime())}.log", 'w').close()
             self.m_singal.emit(f"开始比对{time.asctime( time.localtime(time.time()))}中......")
-            ExistsMkDir().exists_mk_dir() # 初始化文件
-            main = TestMain()
             if parsing == 'word':
                 rec_code = QtWidgets.QMessageBox.question(self, "友情提示", "请选择word解析程序：Yes=office, No=wps", QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No)
                 if rec_code == QtWidgets.QMessageBox.No:
                     app = 'WPS'
                 else:
                     app = 'OFFICE'
-                self.m_singal.emit("开始转换doc_to_docx".center(50 // 2, "-"))
-                main.test_convert_doc_to_docx(app)
-                self.m_singal.emit("转换成功")
-                self.m_singal.emit("开始比对word")
-                data = main.test_compare_word()
-                self.m_singal.emit("比对成功")
-            elif parsing == 'excel':
-                data = main.test_compare_excel()
-            elif parsing == 'txt':
-                data = main.test_compare_txt()
-            log.logger.info(f"比对结束{time.asctime( time.localtime(time.time()))}")
+                glo.set_value("app", app)
+            self.m_thread.m_singal.connect(self.show_report)
+            self.m_thread.m_singal_1.connect(self.show_msg)
+            self.m_thread.m_singal_2.connect(self.set_btn_or_radio)
+            self.m_thread.start()
+        else:
+            QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, '警告', '未选择解析格式').exec_()
+            self.set_btn_or_radio(True)
+            self.m_singal.emit("未选择解析格式")
+
+class Thread(QtCore.QThread):
+    m_singal = QtCore.pyqtSignal(object)
+    m_singal_1 = QtCore.pyqtSignal(str)
+    m_singal_2 = QtCore.pyqtSignal(object)
+    def __init__(self):
+        super(Thread, self).__init__()
+
+    def run(self):
+        self.parsing = glo.get_value("parsing")
+        self.app = glo.get_value("app")
+        self.main = TestMain()
+        data_list = []
+        try:
+            ExistsMkDir().exists_mk_dir() # 初始化文件s
+            if self.parsing == 'word':
+                self.main.test_convert_doc_to_docx(self.app)
+                data_list = self.main.test_compare_word()
+            elif self.parsing == 'excel':
+                data_list = self.main.test_compare_excel()
+            elif self.parsing == 'txt':
+                data_list = self.main.test_compare_txt()
+        except Exception as e:
+            log.logger.info(f"程序异常：{e}")
+            pass
+        finally:
+            self.m_singal.emit(data_list)
+            self.m_singal_2.emit(True)
             with open(f"{_path}/log/{time.strftime('%Y-%m-%d', time.localtime())}.log", "r", encoding="utf-8") as lines:
                 array=lines.readlines()
                 for i in array:
                     i=i.strip('\n')
-                    self.m_singal.emit(i)
-            self.show_report(data)
-        else:
-            QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, '警告', '未选择解析格式').exec_()
-            self.m_singal.emit("未选择解析格式")
+                    self.m_singal_1.emit(i)
+            self.m_singal_1.emit("比对结束")
+        
+
 
 class TestMain():
-    def __init__(self,):
+    def __init__(self):
         self.compare = Compare()
         self.message = Message()
         self.parsing_word = ParsingWord()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import re
-from pathlib import Path
 from deepdiff import DeepDiff
 from typing import List
 from utils.parsing_word_document import ParsingWord

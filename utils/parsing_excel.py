@@ -3,13 +3,11 @@
 import re
 import pandas
 import time
-import xlwt
 import string
 import openpyxl
 from pathlib import Path
 from utils.glo import Globals
 from win32com import client as wc
-from openpyxl.comments import Comment
 
 
 class ParingExcel:

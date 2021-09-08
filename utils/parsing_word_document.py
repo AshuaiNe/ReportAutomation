@@ -14,7 +14,6 @@ from utils.log import LoggerFactory
 from shutil import copyfile
 from utils.glo import Globals
 from pathlib import Path
-from threading import Thread, Lock
 
 
 class ParsingWord:
@@ -26,7 +25,6 @@ class ParsingWord:
         self.compile = re.compile(r"[\n\s*\r]+")
         self._path = self.glo.get_value('_path')
         self.parsing = self.glo.get_value('parsing')
-        self.product = self.glo.get_value('product')
         self.original_data = f"{self._path}/compare/original_data/{self.parsing}/{time.strftime('%Y-%m-%d', time.localtime())}/"
         self.challenger = f"{self._path}/compare/challenger/{self.parsing}/{time.strftime('%Y-%m-%d', time.localtime())}/"
         self._path_files = [self.original_data, self.challenger]
