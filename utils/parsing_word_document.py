@@ -2,6 +2,7 @@
 # encoding: utf-8
 import re
 import time
+import pythoncom
 from docx import Document
 from docx.document import Document as _Document
 from docx.oxml.text.paragraph import CT_P
@@ -125,30 +126,28 @@ class ParsingWord:
         @param {None}
         @return {self._path_files}
         '''    
-        try:
-            if app == 'OFFICE':
-                application_app = "Word"
-            elif app == 'WPS':
-                application_app = "Kwps"
-            try:
-                w = wc.Dispatch(f'{application_app}.Application') # 打开word应用程序
-            except Exception:
-                self.log.logger.info(f"应用程序打开异常，请使用其它程序{Exception}")
-            for path_file in self._path_files:
-                for file in Path(path_file).iterdir():
-                    if Path(file).suffix == '.doc' and not Path(file).stem.startswith('~$'):
-                        doc = w.Documents.Open(file.__str__())
-                        if app == 'OFFICE':
-                            doc.SaveAs(f"{path_file}{Path(file).stem}" + '.docx', 12)
-                        elif app == 'WPS':
-                            doc.SaveAs2(f"{path_file}{Path(file).stem}" + '.docx', 12)
-                        doc.Close()
-                    else:
-                        continue
-            w.Quit()
-        except Exception:
-            self.log.logger.info(f"转换异常：{Exception}")
-            pass
+        # try:
+        pythoncom.CoInitialize()
+        if app == 'OFFICE':
+            application_app = "Word"
+        elif app == 'WPS':
+            application_app = "Kwps"
+        w = wc.Dispatch(f'{application_app}.Application') # 打开word应用程序
+        for path_file in self._path_files:
+            for file in Path(path_file).iterdir():
+                if Path(file).suffix == '.doc' and not Path(file).stem.startswith('~$'):
+                    doc = w.Documents.Open(file.__str__())
+                    if app == 'OFFICE':
+                        doc.SaveAs(f"{path_file}{Path(file).stem}" + '.docx', 12)
+                    elif app == 'WPS':
+                        doc.SaveAs2(f"{path_file}{Path(file).stem}" + '.docx', 12)
+                    doc.Close()
+                else:
+                    continue
+        w.Quit()
+        # except Exception:
+        #     self.log.logger.info(f"转换异常：{Exception}")
+        #     pass
 
 
     def get_file_path_tuple(self, endswith):
