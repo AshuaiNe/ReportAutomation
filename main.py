@@ -119,9 +119,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def open_folder(self, folder):
         self.textEdit_log.clear()
         if self.word_radio.isChecked() or self.excel_radio.isChecked() or self.txt_radio.isChecked():
-            import os
-            path_folder = f"{_path}/compare/{folder}/{parsing}/{time.strftime('%Y-%m-%d', time.localtime())}"
-            os.startfile(path_folder)
+            try:
+                self.m_singal.emit(f"初始化数据......")
+                ExistsMkDir().exists_mk_dir() # 初始化文件s
+                import os
+                path_folder = f"{_path}/compare/{folder}/{parsing}/{time.strftime('%Y-%m-%d', time.localtime())}"
+                os.startfile(path_folder)
+            except Exception as e:
+                self.m_singal.emit(f"程序异常：{e}")
+                pass
         else:
             QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, '警告', '未选择解析格式').exec_()
             self.set_btn_or_radio(True)
@@ -201,7 +207,6 @@ class Thread(QtCore.QThread):
         self.main = TestMain()
         data_list = []
         try:
-            ExistsMkDir().exists_mk_dir() # 初始化文件s
             if self.parsing == 'word':
                 self.main.test_convert_doc_to_docx(self.app)
                 data_list = self.main.test_compare_word()
