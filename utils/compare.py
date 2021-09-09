@@ -57,7 +57,7 @@ class Compare:
             compare_list.append(self.parsing_txt.get_txt(args))
         result = DeepDiff(compare_list[0], compare_list[1])
         begin_filename = str(begin_filename).split('.')[0] + '.xls'
-        end_filename = str(end_filename).split('.')[0] + '.xls'
+        end_filename = str(end_filename).split('.')[0] + '.xlsx'
         self.parsing_txt.set_json_to_excel(end_filename, result)
         for key in result.keys():
             if 'dictionary_item_added' == key:
@@ -66,7 +66,7 @@ class Compare:
                 removed_line = len(result[key])
             elif 'values_changed' == key:
                 line = len(result[key])
-        result = [begin_filename, end_filename.replace('result', 'challenger'), end_filename, added_line, removed_line,
+        result = [begin_filename, begin_filename.replace('result', 'challenger'), end_filename, added_line, removed_line,
                     line, False if result else True]
         return result
 

@@ -1,4 +1,5 @@
 import re
+import openpyxl
 import pandas
 import xlwt
 import string
@@ -12,7 +13,7 @@ class ParsingTxt:
     def get_txt(self, filename):
         txt_json = {}
         line_list = []
-        file = open(filename, 'r', encoding='utf-8')
+        file = open(filename, 'r')
         alphabet = list(string.ascii_uppercase) + [letter1+letter2 for letter1 in string.ascii_uppercase for letter2 in string.ascii_uppercase]
         for x, line in enumerate(file):
             x += 1
@@ -26,7 +27,7 @@ class ParsingTxt:
             line_list.append(line)
         file.close()
         df = pandas.DataFrame(line_list)
-        filename = str(filename).split('.')[0] + '.xls'
+        filename = str(filename).split('.')[0] + '.xlsx'
         if 'result' in filename:
             challenger = filename.replace('result', 'challenger').replace('copyfile', '')
             df.to_excel(challenger, index=None, sheet_name=Path(str(filename).replace('copyfile', '')).stem)
@@ -40,7 +41,7 @@ class ParsingTxt:
         removed_line = []
         changed = []
         values_changed = []
-        sheet = pandas.ExcelFile(filename, engine='xlrd').sheet_names[0]
+        sheet = pandas.ExcelFile(filename, engine='openpyxl').sheet_names[0]
         for key in compare_result.keys():
             if key == 'dictionary_item_added':
                 for x in range(len(compare_result[key])):
@@ -61,12 +62,11 @@ class ParsingTxt:
             else:
                 continue
         dict_frame = {"新增行": added_line, "删除行": removed_line, "差异行": changed, "差异结果": values_changed}
-        wb = xlwt.Workbook(encoding="utf-8")
-        ws = wb.add_sheet('比对结果', cell_overwrite_ok=True)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = '比对结果'
         for x, key in enumerate(dict_frame):
-            ws.write(0, x, str(key))
-            row = 1
+            ws.cell(row=1, column=x+1, value=str(key)).value
             for y in range(len(dict_frame[key])):
-                ws.write(row, x, str(dict_frame[key][y]))
-                row += 1
+                ws.cell(row=y+2, column=x+1, value=str(dict_frame[key][y])).value
         wb.save(filename)
