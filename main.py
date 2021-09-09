@@ -52,6 +52,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.pushButton.setObjectName("pushButton")
         self.pushButton.clicked.connect(lambda: self.display())
         self.horizontalLayout.addWidget(self.pushButton)
+        self.pushButton_1 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_1.setObjectName("pushButton_1")
+        self.pushButton_1.clicked.connect(lambda: self.open_folder('challenger'))
+        self.horizontalLayout.addWidget(self.pushButton_1)
+        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.pushButton_2.clicked.connect(lambda: self.open_folder('original_data'))
+        self.horizontalLayout.addWidget(self.pushButton_2)
+        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.pushButton_3.clicked.connect(lambda: self.open_folder('excel_report'))
+        self.horizontalLayout.addWidget(self.pushButton_3)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setMouseTracking(False)
@@ -97,9 +109,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.word_radio.setText(_translate("MainWindow", "word"))
         self.excel_radio.setText(_translate("MainWindow", "excel"))
         self.txt_radio.setText(_translate("MainWindow", "txt"))
+        self.pushButton_1.setText(_translate("MainWindow", "新文件"))
+        self.pushButton_2.setText(_translate("MainWindow", "旧文件"))
+        self.pushButton_3.setText(_translate("MainWindow", "结果文件"))
         self.pushButton.setText(_translate("MainWindow", "开始比对"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_log), _translate("MainWindow", "执行日志"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_report), _translate("MainWindow", "测试报告"))
+
+    def open_folder(self, folder):
+        self.textEdit_log.clear()
+        if self.word_radio.isChecked() or self.excel_radio.isChecked() or self.txt_radio.isChecked():
+            import os
+            path_folder = f"{_path}/compare/{folder}/{parsing}/{time.strftime('%Y-%m-%d', time.localtime())}"
+            os.startfile(path_folder)
+        else:
+            QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, '警告', '未选择解析格式').exec_()
+            self.set_btn_or_radio(True)
+            self.m_singal.emit("未选择解析格式")
 
     def show_report(self, data_list):
         self.QIM = QtGui.QStandardItemModel()
