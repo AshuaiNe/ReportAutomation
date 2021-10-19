@@ -174,17 +174,12 @@ class ParsingWord:
                                 file_new_path = self._result_file + file
                                 copyfile(file_path, file_new_path).encode('utf-8')
                                 challenger_file_list.append(file_new_path)
-                        elif Path(file).suffix == '.doc':
-                            continue
-                        else:
-                            self.log.logger.info(f"文件夹空，请核对\n文件内容{self._path_files}")
-                else:
-                    self.log.logger.info(f"文件夹空，请核对\n文件内容{self._path_files}")
                 i = i + 1
             if len(original_file_list) != len(challenger_file_list):
-                    self.log.logger.info(f"新旧文件数量不一致，请核对！\n文件内容{self._path_files}")
-            else:
-                return list(zip(sorted(original_file_list, reverse=False), sorted(challenger_file_list, reverse=False)))
+                self.log.logger.info(f"新旧文件数量不一致，请核对！\n文件内容{self._path_files}")
+            elif not original_file_list and not challenger_file_list:
+                self.log.logger.info(f"文件夹内不存在.xls结尾文件，请核对\n文件内容{self._path_files}")
+            return list(zip(sorted(original_file_list, reverse=False), sorted(challenger_file_list, reverse=False)))
         except Exception as e:
             self.log.logger.info(f"{e}")
 

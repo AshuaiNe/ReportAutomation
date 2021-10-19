@@ -117,11 +117,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_report), _translate("MainWindow", "测试报告"))
 
     def open_folder(self, folder):
-        self.textEdit_log.clear()
         if self.word_radio.isChecked() or self.excel_radio.isChecked() or self.txt_radio.isChecked():
             try:
                 self.m_singal.emit(f"初始化数据......")
-                ExistsMkDir().exists_mk_dir() # 初始化文件s
+                ExistsMkDir().exists_mk_dir(False) # 初始化文件s
                 import os
                 path_folder = f"{_path}/compare/{folder}/{parsing}/{time.strftime('%Y-%m-%d', time.localtime())}"
                 os.startfile(path_folder)
@@ -207,6 +206,7 @@ class Thread(QtCore.QThread):
         self.main = TestMain()
         data_list = []
         try:
+            ExistsMkDir().exists_mk_dir(True)
             if self.parsing == 'word':
                 self.main.test_convert_doc_to_docx(self.app)
                 data_list = self.main.test_compare_word()
@@ -226,7 +226,6 @@ class Thread(QtCore.QThread):
                     i=i.strip('\n')
                     self.m_singal_1.emit(i)
             self.m_singal_1.emit("比对结束")
-        
 
 
 class TestMain():

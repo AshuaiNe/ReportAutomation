@@ -56,7 +56,7 @@ class Compare:
         for args in list_args:
             compare_list.append(self.parsing_txt.get_txt(args))
         result = DeepDiff(compare_list[0], compare_list[1])
-        begin_filename = str(begin_filename).split('.')[0] + '.xls'
+        begin_filename = str(begin_filename).split('.')[0] + '.xlsx'
         end_filename = str(end_filename).split('.')[0] + '.xlsx'
         self.parsing_txt.set_json_to_excel(end_filename, result)
         for key in result.keys():
