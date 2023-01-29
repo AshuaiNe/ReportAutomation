@@ -275,6 +275,7 @@ class TestMain():
 
 
 if __name__ == '__main__':
+    # 测试
     app = QtWidgets.QApplication(sys.argv)
     ui = Ui_MainWindow()
     ui.setWindowTitle("自动化比对工具")
